@@ -1,7 +1,16 @@
 import mongoose from "mongoose";
 
-const uri = process.env.MONGODB_URI;
-if (!uri) throw new Error("Add MONGODB_URI to the environment variables");
+function getMongoUri(): string {
+  const uri = process.env.MONGODB_URI;
+
+  if (!uri) {
+    throw new Error("Add MONGODB_URI to the environment variables");
+  }
+
+  return uri;
+}
+
+const uri = getMongoUri();
 
 const globalForMongoose = global as typeof globalThis & {
   mongooseCache?: { conn: typeof mongoose | null; promise: Promise<typeof mongoose> | null };
