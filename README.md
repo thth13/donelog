@@ -20,6 +20,10 @@ Random 256-bit secret keys and separate 30-day session tokens are stored as SHA-
 
 Pending browser entries are scoped to the account ID and survive sign-out. Only `thth13` imports the old unscoped browser queue. Signing in as another user never transfers those entries. Email registration, key recovery, and JWT are not implemented yet.
 
+## Link previews and icons
+
+`app/favicon.ico`, `app/icon.png`, and `app/apple-icon.png` provide browser and Apple icons. The generated `app/opengraph-image.png` is served publicly using Next.js file-based Open Graph metadata, with alt text and a Twitter large-image card. Preview URLs use the request domain; optionally set `NEXT_PUBLIC_SITE_URL` to the full public origin (for example, `https://your-domain.com`) to pin the domain behind a proxy.
+
 ## Vercel
 
 Import the repository into Vercel and add `MONGODB_URI` to the project environment variables. In MongoDB Atlas, allow network access from `0.0.0.0/0` because Vercel serverless outbound IP addresses can change. Use a dedicated database user with access limited to the application database.
