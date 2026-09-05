@@ -4,7 +4,9 @@ import { accountFetch, useAccount } from "@/components/AccountProvider";
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { CalendarBlank, TrendUp, X, PencilSimple } from "@phosphor-icons/react";
+import { CalendarBlank, TrendUp, X, PencilSimple, FileText } from "@phosphor-icons/react";
+
+import { DailyReportDialog } from "@/components/DailyReportDialog";
 
 import { EditTaskDialog } from "@/components/EditTaskDialog";
 
@@ -18,6 +20,7 @@ const dateKey = (value: string | Date) => new Date(value).toLocaleDateString("sv
 export function StatsDashboard() {
   const { id: userId } = useAccount();
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [reportDate, setReportDate] = useState<string | null>(null);
   const [range, setRange] = useState<Range>("days");
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
@@ -170,12 +173,13 @@ export function StatsDashboard() {
   return (
     <>
       {loadError && <p className="history-load-error" role="alert">{loadError} <button type="button" onClick={() => setLoadAttempt(value => value + 1)}>Retry</button></p>}
-      <section className="stats-heading"><div><div className="eyebrow">Your progress</div><h1>Statistics</h1><p>Everything you have done, all in one clear view.</p></div><div className="summary"><span>This month</span><strong>{thisMonth}</strong><small><TrendUp weight="bold" /> completed tasks</small></div></section>
+      <section className="stats-heading"><div><div className="eyebrow">Your progress</div><h1>Statistics</h1><p>Everything you have done, all in one clear view.</p><button type="button" className="daily-report-trigger" disabled={loading} onClick={() => setReportDate(dateKey(new Date()))}><FileText size={18} />Today’s report</button></div><div className="summary"><span>This month</span><strong>{thisMonth}</strong><small><TrendUp weight="bold" /> completed tasks</small></div></section>
       <section className="chart-card">
         <div className="chart-top"><div><h2>Work rhythm</h2><p>Number of completed tasks</p></div><div className="tabs">{(["days", "weeks", "months"] as Range[]).map(item => <button className={range === item ? "active" : ""} onClick={() => setRange(item)} key={item}>{item === "days" ? "Days" : item === "weeks" ? "Weeks" : "Months"}</button>)}</div></div>
         <div className="chart-area">{loading ? <div className="loading">Loading data…</div> : <ResponsiveContainer width="100%" height="100%"><BarChart data={chartData} margin={{ top: 12, right: 8, left: -24, bottom: 0 }}><CartesianGrid vertical={false} stroke="#e7e4dc" /><XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fill: "#77756e", fontSize: 11 }} /><YAxis allowDecimals={false} axisLine={false} tickLine={false} tick={{ fill: "#a09d94", fontSize: 11 }} /><Tooltip cursor={{ fill: "#f0eee7" }} contentStyle={{ border: 0, borderRadius: 12, boxShadow: "0 10px 30px #1b201820" }} formatter={(value) => [value, "Tasks"]} /><Bar dataKey="count" fill="#344c3d" radius={[6, 6, 0, 0]} maxBarSize={44} /></BarChart></ResponsiveContainer>}</div>
       </section>
-      <section className="history"><div className="history-title"><div><h2 ref={historyRef} tabIndex={-1}>History</h2><p>Your completed tasks by day</p></div><CalendarBlank size={24} /></div>{!loading && groups.length === 0 ? <div className="empty">Your first entries will appear here.</div> : groups.map(([date, items]) => <div className="day-group" key={date}><div className="day-date"><strong>{new Date(date).toLocaleDateString("en-US", { day: "2-digit" })}</strong><span>{new Date(date).toLocaleDateString("en-US", { month: "long", weekday: "short" })}</span></div><ul>{items.map(task => <li key={task._id}><div className="task-marker"><i /><button type="button" className="archive-task" aria-label={`Delete task: ${task.title}`} title="Delete task" onClick={() => { setArchiveError(""); setArchiveNotice(""); setArchiveTarget(task); }}><X size={13} weight="bold" /></button></div><span className="task-title-content"><span>{task.title}</span><button type="button" className="edit-task" aria-label={`Edit task: ${task.title}`} title="Edit task" onClick={() => { setArchiveNotice(""); setEditTarget(task); }}><PencilSimple size={14} /></button></span><time>{new Date(task.createdAt).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}</time></li>)}</ul></div>)}</section>
+      <section className="history"><div className="history-title"><div><h2 ref={historyRef} tabIndex={-1}>History</h2><p>Your completed tasks by day</p></div><CalendarBlank size={24} /></div>{!loading && groups.length === 0 ? <div className="empty">Your first entries will appear here.</div> : groups.map(([date, items]) => <div className="day-group" key={date}><div className="day-heading"><div className="day-date"><strong>{new Date(`${date}T12:00:00`).toLocaleDateString("en-US", { day: "2-digit" })}</strong><span>{new Date(`${date}T12:00:00`).toLocaleDateString("en-US", { month: "long", weekday: "short" })}</span></div><button type="button" className="day-report-trigger" aria-label={`View report for ${date}`} onClick={() => setReportDate(date)}><FileText size={14} />Report</button></div><ul>{items.map(task => <li key={task._id}><div className="task-marker"><i /><button type="button" className="archive-task" aria-label={`Delete task: ${task.title}`} title="Delete task" onClick={() => { setArchiveError(""); setArchiveNotice(""); setArchiveTarget(task); }}><X size={13} weight="bold" /></button></div><span className="task-title-content"><span>{task.title}</span><button type="button" className="edit-task" aria-label={`Edit task: ${task.title}`} title="Edit task" onClick={() => { setArchiveNotice(""); setEditTarget(task); }}><PencilSimple size={14} /></button></span><time>{new Date(task.createdAt).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}</time></li>)}</ul></div>)}</section>
+      {reportDate && <DailyReportDialog date={reportDate} tasks={tasks.filter(task => dateKey(task.createdAt) === reportDate)} incomplete={loading || Boolean(loadError)} onClose={() => setReportDate(null)} />}
       {editTarget && <EditTaskDialog key={editTarget._id} task={editTarget} onClose={() => setEditTarget(null)} onSaved={task => {
         editedTasks.current.set(task._id, task);
         window.dispatchEvent(new CustomEvent(SYNC_EVENT, { detail: task }));
