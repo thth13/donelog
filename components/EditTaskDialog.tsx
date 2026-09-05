@@ -1,5 +1,7 @@
 "use client";
 
+import { accountFetch, useAccount } from "@/components/AccountProvider";
+
 import { useEffect, useRef, useState } from "react";
 import DatePicker from "react-datepicker";
 import { CaretLeft, CaretRight, CalendarBlank, Clock } from "@phosphor-icons/react";
@@ -14,6 +16,7 @@ function localDateTime(value: string) {
 }
 
 export function EditTaskDialog({ task, onClose, onSaved }: { task: Task; onClose: () => void; onSaved: (task: Task) => void }) {
+  const { id: userId } = useAccount();
   const [calendarOpen, setCalendarOpen] = useState(false);
   const dateButtonRef = useRef<HTMLButtonElement>(null);
   const [title, setTitle] = useState(task.title);
@@ -66,12 +69,12 @@ export function EditTaskDialog({ task, onClose, onSaved }: { task: Task; onClose
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 15000);
     try {
-      if (pendingTasks().some(entry => entry._id === task._id)) {
-        const response = await fetch("/api/tasks", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(task), signal: controller.signal });
+      if (pendingTasks(userId).some(entry => entry._id === task._id)) {
+        const response = await accountFetch(userId, "/api/tasks", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(task), signal: controller.signal });
         if (!response.ok) throw new Error("Could not sync this task. Please try again.");
-        acknowledgeTask(await response.json());
+        acknowledgeTask(userId, await response.json());
       }
-      const response = await fetch(`/api/tasks/${task._id}`, {
+      const response = await accountFetch(userId, `/api/tasks/${task._id}`, {
         method: "PATCH", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ title: title.trim(), createdAt: completedAt === localDateTime(task.createdAt) ? task.createdAt : new Date(completedAt).toISOString() }),
         signal: controller.signal

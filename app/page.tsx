@@ -1,9 +1,16 @@
 import Link from "next/link";
 import { ChartBar, Check } from "@phosphor-icons/react/dist/ssr";
 import { TaskForm } from "@/components/TaskForm";
+import { currentUser } from "@/lib/auth";
+import { Landing } from "@/components/Landing";
+import { AccountProvider } from "@/components/AccountProvider";
+import { TaskSync } from "@/components/TaskSync";
 
-export default function Home() {
+export default async function Home({ searchParams }: { searchParams: Promise<{ mode?: string }> }) {
+  const user = await currentUser();
+  if (!user) return <Landing initialLoginOpen={(await searchParams).mode === "login"} />;
   return (
+    <AccountProvider user={user}>
     <main className="home-shell">
       <section className="minimal-home">
         <div className="center-brand"><span><Check weight="bold" /></span>done</div>
@@ -14,5 +21,7 @@ export default function Home() {
         </div>
       </section>
     </main>
+    <TaskSync />
+    </AccountProvider>
   );
 }

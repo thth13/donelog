@@ -1,10 +1,14 @@
 "use client";
 
+import { accountFetch, SESSION_EXPIRED_EVENT, useAccount } from "@/components/AccountProvider";
+
 import { useEffect, useState } from "react";
-import { acknowledgeTask, isQueueKey, pendingTasks, QUEUE_EVENT } from "@/lib/task-queue";
+import { acknowledgeTask, migrateLegacyQueue, isQueueKey, pendingTasks, QUEUE_EVENT } from "@/lib/task-queue";
 
 export function TaskSync() {
+  const { id: userId, login } = useAccount();
   const [message, setMessage] = useState("");
+  const [expired, setExpired] = useState(false);
   useEffect(() => {
     let stopped = false;
     let running = false;
@@ -19,7 +23,8 @@ export function TaskSync() {
       let retry = false;
       let blocked = false;
       try {
-        const tasks = pendingTasks();
+        if (login === "thth13") migrateLegacyQueue(userId);
+        const tasks = pendingTasks(userId);
         setMessage(tasks.length ? "Saved on this device · waiting to sync" : "");
         for (const task of tasks) {
           if (stopped || !navigator.onLine) break;
@@ -27,7 +32,7 @@ export function TaskSync() {
           const timeout = setTimeout(() => controller?.abort(), 15000);
           let response: Response;
           try {
-            response = await fetch("/api/tasks", {
+            response = await accountFetch(userId, "/api/tasks", {
               method: "POST", headers: { "Content-Type": "application/json" },
               body: JSON.stringify(task), signal: controller.signal
             });
@@ -35,12 +40,12 @@ export function TaskSync() {
           if (!response.ok) {
             blocked = true;
             retry = response.status >= 500 || response.status === 408 || response.status === 429;
-            setMessage("Tasks are kept on this device · could not sync");
+            setMessage(response.status === 401 ? "Session expired · sign in again to sync your saved tasks" : response.status === 409 ? "Sync conflict · reload and sign in to the original account" : "Tasks are kept on this device · could not sync");
             break;
           }
-          acknowledgeTask(await response.json());
+          acknowledgeTask(userId, await response.json());
         }
-        if (!pendingTasks().length) { setMessage(""); attempts = 0; }
+        if (!pendingTasks(userId).length) { setMessage(""); attempts = 0; }
       } catch {
         retry = true;
         if (!stopped) setMessage("Could not sync · local tasks will be retried when you return");
@@ -50,13 +55,15 @@ export function TaskSync() {
           timer = setTimeout(() => void sync(), Math.min(2000 * 2 ** attempts++, 60000));
         } else if (!stopped && !retry && !blocked && navigator.onLine) {
           // Pick up tasks submitted while an earlier request was in flight.
-          try { if (pendingTasks().length) timer = setTimeout(() => void sync(), 1000); } catch { /* Retain inaccessible storage. */ }
+          try { if (pendingTasks(userId).length) timer = setTimeout(() => void sync(), 1000); } catch { /* Retain inaccessible storage. */ }
         }
       }
     }
     const wake = () => { attempts = 0; void sync(); };
     const visible = () => { if (document.visibilityState === "visible") wake(); };
-    const storage = (event: StorageEvent) => { if (isQueueKey(event.key)) wake(); };
+    const storage = (event: StorageEvent) => { if (isQueueKey(userId, event.key)) wake(); };
+    const sessionExpired = () => setExpired(true);
+    window.addEventListener(SESSION_EXPIRED_EVENT, sessionExpired);
     window.addEventListener("online", wake);
     window.addEventListener("storage", storage);
     window.addEventListener(QUEUE_EVENT, wake);
@@ -67,11 +74,12 @@ export function TaskSync() {
       clearTimeout(timer);
       controller?.abort();
       window.removeEventListener("online", wake);
+      window.removeEventListener(SESSION_EXPIRED_EVENT, sessionExpired);
       window.removeEventListener("storage", storage);
       window.removeEventListener(QUEUE_EVENT, wake);
       document.removeEventListener("visibilitychange", visible);
     };
-  }, []);
+  }, [userId, login]);
 
-  return <div className="sync-notice" role="status">{message && <>{message} <button type="button" onClick={() => window.dispatchEvent(new Event(QUEUE_EVENT))}>Retry</button></>}</div>;
+  return <div className="sync-notice" role="status">{expired ? <>Session expired. Your pending entries are kept on this device. <a href="/?mode=login">Sign in again</a></> : message && <>{message} <button type="button" onClick={() => window.dispatchEvent(new Event(QUEUE_EVENT))}>Retry</button></>}</div>;
 }

@@ -1,11 +1,14 @@
 "use client";
 
+import { useAccount } from "@/components/AccountProvider";
+
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { ArrowUpRight, Check } from "@phosphor-icons/react";
 
 import { enqueueTask } from "@/lib/task-queue";
 
 export function TaskForm() {
+  const { id: userId } = useAccount();
   const [title, setTitle] = useState("");
   const [status, setStatus] = useState<"idle" | "saved" | "error">("idle");
 
@@ -19,7 +22,7 @@ export function TaskForm() {
     const value = input.current?.value.trim() || "";
     if (!value) return;
     try {
-      enqueueTask(value);
+      enqueueTask(userId, value);
     } catch {
       setStatus("error");
       return;

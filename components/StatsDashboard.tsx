@@ -1,5 +1,7 @@
 "use client";
 
+import { accountFetch, useAccount } from "@/components/AccountProvider";
+
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { CalendarBlank, TrendUp, X, PencilSimple } from "@phosphor-icons/react";
@@ -14,9 +16,12 @@ type Range = "days" | "weeks" | "months";
 const dateKey = (value: string | Date) => new Date(value).toLocaleDateString("sv-SE");
 
 export function StatsDashboard() {
+  const { id: userId } = useAccount();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [range, setRange] = useState<Range>("days");
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
+  const [loadAttempt, setLoadAttempt] = useState(0);
 
   const [editTarget, setEditTarget] = useState<Task | null>(null);
   const editedTasks = useRef(new Map<string, Task>());
@@ -53,21 +58,21 @@ export function StatsDashboard() {
     const timeout = setTimeout(() => controller.abort(), 15000);
     try {
       // Persist queued entries before archiving so their contents stay in the database.
-      if (pendingTasks().some(task => task._id === archiveTarget._id)) {
-        const saved = await fetch("/api/tasks", {
+      if (pendingTasks(userId).some(task => task._id === archiveTarget._id)) {
+        const saved = await accountFetch(userId, "/api/tasks", {
           method: "POST", headers: { "Content-Type": "application/json" },
           body: JSON.stringify(archiveTarget), signal: controller.signal
         });
         if (!saved.ok) throw new Error("Could not delete this task. Please try again.");
       }
-      const response = await fetch(`/api/tasks/${archiveTarget._id}/archive`, {
+      const response = await accountFetch(userId, `/api/tasks/${archiveTarget._id}/archive`, {
         method: "PATCH", signal: controller.signal
       });
       if (!response.ok) throw new Error("Could not delete this task. Please try again.");
       const archived: Task = await response.json();
       archivedIds.current.add(archived._id);
       setTasks(current => current.filter(task => task._id !== archived._id));
-      try { acknowledgeTask(archived); } catch { /* The server has already retained the archived task. */ }
+      try { acknowledgeTask(userId, archived); } catch { /* The server has already retained the archived task. */ }
       setArchiveNotice("Task deleted.");
       setArchiveTarget(null);
     } catch (error) {
@@ -86,7 +91,7 @@ export function StatsDashboard() {
     const refresh = () => {
       if (!active) return;
       let local: Task[] = [];
-      try { local = pendingTasks(); } catch { /* TaskSync displays storage errors. */ }
+      try { local = pendingTasks(userId); } catch { /* TaskSync displays storage errors. */ }
       const merged = new Map(confirmed);
       editedTasks.current.forEach((task, id) => {
         const current = merged.get(id);
@@ -104,22 +109,27 @@ export function StatsDashboard() {
     const controller = new AbortController();
     const load = async () => {
       try {
-        const response = await fetch("/api/tasks", { signal: controller.signal });
-        if (!response.ok) return;
+        const response = await accountFetch(userId, "/api/tasks", { signal: controller.signal });
+        if (!response.ok) {
+          const data = await response.json();
+          if (active) setLoadError(data.error || "Could not load your history. Please try again.");
+          return;
+        }
         const data = await response.json();
         if (active && Array.isArray(data)) {
+          setLoadError("");
           data.forEach((task: Task) => confirmed.set(task._id, task));
           refresh();
         }
-      } catch { /* Keep locally queued tasks visible while offline. */ }
+      } catch { if (active) setLoadError("Could not load your history. Local entries are still available. Check your connection and retry."); }
       finally { if (active) setLoading(false); }
     };
-    const storage = (event: StorageEvent) => { if (isQueueKey(event.key)) { refresh(); void load(); } };
+    const storage = (event: StorageEvent) => { if (isQueueKey(userId, event.key)) { refresh(); void load(); } };
     window.addEventListener(QUEUE_EVENT, refresh);
     window.addEventListener(SYNC_EVENT, synced);
     window.addEventListener("storage", storage);
     refresh();
-    try { if (pendingTasks().length) setLoading(false); } catch { /* See TaskSync. */ }
+    try { if (pendingTasks(userId).length) setLoading(false); } catch { /* See TaskSync. */ }
     void load();
     return () => {
       active = false;
@@ -128,7 +138,7 @@ export function StatsDashboard() {
       window.removeEventListener(SYNC_EVENT, synced);
       window.removeEventListener("storage", storage);
     };
-  }, []);
+  }, [userId, loadAttempt]);
 
   const chartData = useMemo(() => {
     const map = new Map<string, number>();
@@ -159,6 +169,7 @@ export function StatsDashboard() {
 
   return (
     <>
+      {loadError && <p className="history-load-error" role="alert">{loadError} <button type="button" onClick={() => setLoadAttempt(value => value + 1)}>Retry</button></p>}
       <section className="stats-heading"><div><div className="eyebrow">Your progress</div><h1>Statistics</h1><p>Everything you have done, all in one clear view.</p></div><div className="summary"><span>This month</span><strong>{thisMonth}</strong><small><TrendUp weight="bold" /> completed tasks</small></div></section>
       <section className="chart-card">
         <div className="chart-top"><div><h2>Work rhythm</h2><p>Number of completed tasks</p></div><div className="tabs">{(["days", "weeks", "months"] as Range[]).map(item => <button className={range === item ? "active" : ""} onClick={() => setRange(item)} key={item}>{item === "days" ? "Days" : item === "weeks" ? "Weeks" : "Months"}</button>)}</div></div>

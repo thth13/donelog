@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
+    "auth:init": "node scripts/init-auth.mjs",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",

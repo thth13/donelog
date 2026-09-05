@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { Types } from "mongoose";
-import { connectDB } from "@/lib/mongodb";
+import { authorizeTaskRequest } from "@/lib/auth";
 import { Task } from "@/models/Task";
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -16,11 +16,12 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     return NextResponse.json({ error: "Enter a valid date and time." }, { status: 400 });
   }
   try {
-    await connectDB();
+    const user = await authorizeTaskRequest(request);
+    if (user instanceof NextResponse) return user;
     // createdAt is the user-editable completion time. Use the collection directly
     // because Mongoose's timestamps make createdAt immutable in model updates.
     const task = await Task.collection.findOneAndUpdate(
-      { _id: new Types.ObjectId(id), archivedAt: null },
+      { _id: new Types.ObjectId(id), userId: new Types.ObjectId(user.id), archivedAt: null },
       { $set: { title, createdAt: new Date(body.createdAt), updatedAt: new Date() } },
       { returnDocument: "after", includeResultMetadata: false }
     );
