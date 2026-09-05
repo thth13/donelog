@@ -118,7 +118,7 @@ export function EditTaskDialog({ task, onClose, onSaved }: { task: Task; onClose
           <DatePicker
             inline
             selected={new Date(date)}
-            onChange={value => { if (value && !lock.current) { setDate(localDateTime(value.toISOString())); setInvalid(null); setError(""); } }}
+            onChange={(value: Date | null) => { if (value && !lock.current) { setDate(localDateTime(value.toISOString())); setInvalid(null); setError(""); } }}
             onSelect={() => { setCalendarOpen(false); dateButtonRef.current?.focus(); }}
             calendarStartDay={1}
             fixedHeight
