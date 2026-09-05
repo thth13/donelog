@@ -80,3 +80,5 @@ The account menu shows only an abbreviated secret key (first nine and last four 
 The capture home omits all account controls. Statistics keeps the account menu but omits Add entry; the brand link returns to capture. The abbreviated key is a rounded, bordered chip with hover, pressed, disabled, and keyboard-focus states. Clicking still copies the full key.
 
 Link preview artwork uses the existing cream/forest-green palette, lowercase done wordmark, completion check, and the landing headline. `app/opengraph-image.png` is a generated public raster asset; `app/opengraph-image.alt.txt` supplies its accessible description. Browser and Apple icons derive from the existing `app/favicon-512.png` brand asset. Root metadata uses the public request origin, optionally overridden by `NEXT_PUBLIC_SITE_URL`, and includes Open Graph and Twitter large-image metadata.
+
+The OG artwork now replaces the oversized circular check with three example completed tasks and small green checkmarks. The background is plain cream, without a surrounding border, dimensional button, or shadow; the headline remains the main element.
