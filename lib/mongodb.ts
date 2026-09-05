@@ -22,6 +22,11 @@ globalForMongoose.mongooseCache = cached;
 export async function connectDB() {
   if (cached.conn) return cached.conn;
   cached.promise ??= mongoose.connect(uri, { bufferCommands: false });
-  cached.conn = await cached.promise;
+  try {
+    cached.conn = await cached.promise;
+  } catch (error) {
+    cached.promise = null;
+    throw error;
+  }
   return cached.conn;
 }

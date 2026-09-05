@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Manrope } from "next/font/google";
 import "./globals.css";
+import { TaskSync } from "@/components/TaskSync";
 
 const manrope = Manrope({ subsets: ["cyrillic", "latin"], variable: "--font-manrope" });
 
@@ -10,5 +11,5 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return <html lang="en"><body className={manrope.variable}>{children}</body></html>;
+  return <html lang="en"><body className={manrope.variable}>{children}<TaskSync /></body></html>;
 }

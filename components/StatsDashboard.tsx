@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { CalendarBlank, TrendUp } from "@phosphor-icons/react";
 
+import { pendingTasks, QUEUE_EVENT, SYNC_EVENT, isQueueKey } from "@/lib/task-queue";
+
 type Task = { _id: string; title: string; createdAt: string };
 type Range = "days" | "weeks" | "months";
 
@@ -14,7 +16,50 @@ export function StatsDashboard() {
   const [range, setRange] = useState<Range>("days");
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => { fetch("/api/tasks").then(r => r.json()).then(data => { setTasks(Array.isArray(data) ? data : []); setLoading(false); }).catch(() => setLoading(false)); }, []);
+  useEffect(() => {
+    let active = true;
+    const confirmed = new Map<string, Task>();
+    const refresh = () => {
+      if (!active) return;
+      let local: Task[] = [];
+      try { local = pendingTasks(); } catch { /* TaskSync displays storage errors. */ }
+      const merged = new Map(confirmed);
+      local.forEach(task => { if (!merged.has(task._id)) merged.set(task._id, task); });
+      setTasks([...merged.values()].sort((a, b) => b.createdAt.localeCompare(a.createdAt)));
+    };
+    const synced = (event: Event) => {
+      const task = (event as CustomEvent<Task>).detail;
+      confirmed.set(task._id, task);
+      refresh();
+    };
+    const controller = new AbortController();
+    const load = async () => {
+      try {
+        const response = await fetch("/api/tasks", { signal: controller.signal });
+        if (!response.ok) return;
+        const data = await response.json();
+        if (active && Array.isArray(data)) {
+          data.forEach((task: Task) => confirmed.set(task._id, task));
+          refresh();
+        }
+      } catch { /* Keep locally queued tasks visible while offline. */ }
+      finally { if (active) setLoading(false); }
+    };
+    const storage = (event: StorageEvent) => { if (isQueueKey(event.key)) { refresh(); void load(); } };
+    window.addEventListener(QUEUE_EVENT, refresh);
+    window.addEventListener(SYNC_EVENT, synced);
+    window.addEventListener("storage", storage);
+    refresh();
+    try { if (pendingTasks().length) setLoading(false); } catch { /* See TaskSync. */ }
+    void load();
+    return () => {
+      active = false;
+      controller.abort();
+      window.removeEventListener(QUEUE_EVENT, refresh);
+      window.removeEventListener(SYNC_EVENT, synced);
+      window.removeEventListener("storage", storage);
+    };
+  }, []);
 
   const chartData = useMemo(() => {
     const map = new Map<string, number>();
