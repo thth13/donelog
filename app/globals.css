@@ -1,3 +1,5 @@
+@import "react-datepicker/dist/react-datepicker.css";
+
 :root { --ink:#1f251f; --green:#344c3d; --cream:#f5f3ed; --line:#dfddd5; --muted:#74756f; }
 * { box-sizing:border-box; }
 html,body { margin:0; min-height:100%; background:var(--cream); color:var(--ink); font-family:var(--font-manrope),sans-serif; }
@@ -51,3 +53,76 @@ button,input { font:inherit; }
 .sync-notice { position:fixed; bottom:16px; left:20px; right:20px; z-index:4; width:fit-content; max-width:calc(100% - 40px); margin:auto; color:var(--ink); background:var(--cream); border-radius:10px; font-size:12px; }
 .sync-notice:not(:empty) { padding:10px 14px; border:1px solid var(--line); }
 .sync-notice button { font:inherit; color:var(--green); background:transparent; border:0; text-decoration:underline; cursor:pointer; padding:4px 8px; }
+.task-marker { position:relative; width:10px; height:24px; display:grid; place-items:center; }
+.archive-task { position:absolute; inset:0 auto auto -7px; width:24px; height:24px; display:grid; place-items:center; padding:0; border:0; border-radius:6px; color:var(--muted); background:var(--cream); opacity:0; cursor:pointer; }
+.day-group li:hover .archive-task,.day-group li:focus-within .archive-task { opacity:1; }
+.archive-task:hover { color:var(--ink); background:var(--line); }
+.archive-task:active { background:#d0cec5; }
+.archive-task:focus-visible,.archive-dialog button:focus-visible { outline:2px solid var(--green); outline-offset:3px; }
+.day-group li>span { min-width:0; overflow-wrap:anywhere; }
+.archive-dialog { width:min(440px,calc(100% - 32px)); max-height:calc(100dvh - 48px); overflow:auto; padding:28px; border:1px solid var(--line); border-radius:22px; background:var(--cream); color:var(--ink); box-shadow:0 24px 80px #1f251f26; }
+.archive-dialog::backdrop { background:#1f251f66; }
+.archive-dialog h2 { margin:0 0 18px; font-size:20px; }
+.archive-dialog p { font-size:13px; line-height:1.6; color:var(--muted); }
+.archive-dialog .archive-task-title { color:var(--ink); font-weight:700; overflow-wrap:anywhere; }
+.archive-dialog .archive-error { color:#a44; }
+.archive-dialog-actions { display:flex; justify-content:flex-end; gap:10px; margin-top:24px; flex-wrap:wrap; }
+.archive-dialog button { min-height:42px; padding:10px 16px; border:1px solid var(--line); border-radius:10px; background:transparent; color:var(--ink); cursor:pointer; font-size:13px; font-weight:700; }
+.archive-dialog button:not(:disabled):hover { background:var(--line); }
+.archive-dialog .archive-confirm { min-width:124px; background:var(--green); border-color:var(--green); color:white; }
+.archive-dialog .archive-confirm:not(:disabled):hover { background:#263c2f; }
+.archive-dialog button:not(:disabled):active { transform:translateY(1px); }
+.archive-dialog button:disabled { opacity:.6; cursor:wait; }
+@media (hover:none),(pointer:coarse) { .archive-task { opacity:1; } }
+.task-title-content { display:flex; align-items:center; gap:8px; }
+.task-title-content>span { min-width:0; overflow-wrap:anywhere; }
+.edit-task { flex:0 0 24px; width:24px; height:24px; display:grid; place-items:center; padding:0; border:0; border-radius:6px; color:var(--muted); background:transparent; opacity:0; cursor:pointer; }
+.day-group li:hover .edit-task,.day-group li:focus-within .edit-task { opacity:1; }
+.edit-task:hover { color:var(--ink); background:var(--line); }
+.edit-task:active { background:#d0cec5; }
+.edit-task:focus-visible,.edit-dialog input:focus-visible { outline:2px solid var(--green); outline-offset:3px; }
+.edit-dialog label { display:block; margin:18px 0 8px; font-size:13px; font-weight:700; }
+.edit-dialog input { width:100%; min-width:0; min-height:44px; padding:10px 12px; border:1px solid var(--line); border-radius:10px; background:#fbfaf7; color:var(--ink); font:inherit; font-size:14px; }
+.edit-dialog input[aria-invalid="true"] { border-color:#a44; }
+.edit-dialog input:disabled { opacity:.6; }
+@media (hover:none),(pointer:coarse) { .edit-task { opacity:1; } }
+
+/* The date/time picker stays inside the dialog's focus and scrolling boundary. */
+.date-field-label { margin:18px 0 8px; font-size:13px; font-weight:700; }
+.datetime-picker { border:1px solid var(--line); border-radius:16px; background:#fbfaf7; overflow:hidden; }
+.datetime-picker:focus-visible { outline:2px solid var(--green); outline-offset:3px; }
+.datetime-summary { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:14px 16px; border-bottom:1px solid var(--line); color:var(--green); font-size:12px; font-weight:700; }
+.datetime-summary span { display:flex; align-items:center; gap:8px; }
+.datetime-calendar { margin:0; padding:0; border:0; min-width:0; }
+.datetime-calendar:disabled { opacity:.55; pointer-events:none; }
+.datetime-picker .react-datepicker { display:flex; align-items:flex-start; width:100%; border:0; border-radius:0; background:transparent; color:var(--ink); font:inherit; font-size:12px; }
+.datetime-picker .react-datepicker__month-container { float:none; min-width:0; flex:1; padding:8px; }
+.datetime-picker .react-datepicker__header { border:0; background:transparent; padding:0; }
+.datetime-picker .datepicker-heading { display:flex; align-items:center; justify-content:space-between; gap:4px; margin-bottom:10px; height:36px; font-size:12px; font-weight:700; }
+.datetime-picker .datepicker-heading button { display:grid; place-items:center; width:30px; min-height:30px; padding:0; border:0; border-radius:8px; }
+.datetime-picker .react-datepicker__month { margin:0; }
+.datetime-picker .react-datepicker__week,.datetime-picker .react-datepicker__day-names { display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); white-space:normal; }
+.datetime-picker .react-datepicker__day-name,.datetime-picker .react-datepicker__day { display:grid; place-items:center; width:auto; min-width:0; height:32px; line-height:1; margin:2px 0; border-radius:8px; color:var(--ink); font-size:11px; }
+.datetime-picker .react-datepicker__day-name { height:24px; color:var(--muted); font-size:10px; }
+.datetime-picker .react-datepicker__day { cursor:pointer; }
+.datetime-picker .react-datepicker__day--outside-month { color:var(--muted); opacity:.55; }
+.datetime-picker .react-datepicker__day--today { font-weight:800; text-decoration:underline; text-underline-offset:4px; }
+.datetime-picker .react-datepicker__day:not([aria-disabled="true"]):hover { background:var(--line); }
+.datetime-picker .react-datepicker__day--keyboard-selected { background:#e3e9e1; }
+.datetime-picker .react-datepicker__day--selected,.datetime-picker .react-datepicker__day--selected:hover { background:var(--green); color:white; opacity:1; }
+.datetime-picker .react-datepicker__day:focus-visible { outline:2px solid var(--green); outline-offset:-2px; }
+.datetime-picker .react-datepicker-time__header { font:inherit; color:var(--muted); font-weight:700; }
+@media(max-width:400px) { .edit-dialog { padding:18px; } .datetime-summary { padding:12px; gap:8px; font-size:11px; } .datetime-picker .react-datepicker__month-container { padding:6px; } }
+
+.task-datetime-row { display:flex; align-items:center; flex-wrap:wrap; gap:8px; }
+.edit-dialog .task-date-trigger { display:flex; align-items:center; gap:7px; min-height:36px; padding:7px 10px; font-size:12px; font-weight:500; background:#fbfaf7; }
+.edit-dialog .task-date-trigger[aria-expanded="true"] { border-color:var(--green); color:var(--green); }
+#task-calendar:not([hidden]) { margin-top:10px; }
+.task-time-fields { min-width:0; margin:0; padding:0; border:0; }
+.task-time-inputs { display:flex; align-items:center; gap:3px; height:36px; padding:0 8px; border:1px solid var(--line); border-radius:10px; background:#fbfaf7; color:var(--muted); }
+.task-time-inputs>svg { margin-right:3px; }
+.task-time-inputs>div { width:25px; }
+.edit-dialog .task-time-inputs label { margin:-1px; padding:0; }
+.edit-dialog .task-time-inputs input { width:25px; min-height:28px; padding:3px 0; border:0; border-radius:4px; background:transparent; text-align:center; font-size:12px; font-variant-numeric:tabular-nums; }
+.edit-dialog .task-time-inputs input[aria-invalid="true"] { outline:1px solid #a44; }
+.time-separator { font-size:12px; }

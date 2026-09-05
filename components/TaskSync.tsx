@@ -38,7 +38,7 @@ export function TaskSync() {
             setMessage("Tasks are kept on this device · could not sync");
             break;
           }
-          acknowledgeTask(task);
+          acknowledgeTask(await response.json());
         }
         if (!pendingTasks().length) { setMessage(""); attempts = 0; }
       } catch {

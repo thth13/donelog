@@ -3,7 +3,8 @@ import { Schema, model, models } from "mongoose";
 const TaskSchema = new Schema(
   {
     title: { type: String, required: true, trim: true, maxlength: 300 },
-    isMock: { type: Boolean, default: false, index: true }
+    isMock: { type: Boolean, default: false, index: true },
+    archivedAt: { type: Date, default: null, index: true }
   },
   { timestamps: true }
 );
