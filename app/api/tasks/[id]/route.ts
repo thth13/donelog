@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { Types } from "mongoose";
 import { authorizeTaskRequest } from "@/lib/auth";
-import { Task } from "@/models/Task";
+import { TaskCollection } from "@/models/Task";
 import { migrateTaskProjects, resolveTaskProject, validProjectInput, withProjectNames } from "@/lib/task-projects";
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -28,7 +28,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     if (projectId === undefined) return NextResponse.json({ error: "Project not found" }, { status: 400 });
     // createdAt is the user-editable completion time. Use the collection directly
     // because Mongoose's timestamps make createdAt immutable in model updates.
-    const task = await Task.collection.findOneAndUpdate(
+    const task = await TaskCollection.findOneAndUpdate(
       { _id: new Types.ObjectId(id), userId: new Types.ObjectId(user.id), archivedAt: null },
       { $set: { title, ...(changesProject ? { projectId } : {}), createdAt: new Date(body.createdAt), updatedAt: new Date() } },
       { returnDocument: "after", includeResultMetadata: false }

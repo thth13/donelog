@@ -1,7 +1,7 @@
 import { Types } from "mongoose";
 import { NextResponse } from "next/server";
 import { authorizeTaskRequest } from "@/lib/auth";
-import { Task } from "@/models/Task";
+import { Task, TaskCollection } from "@/models/Task";
 import { migrateTaskProjects, resolveTaskProject, validProjectInput, withProjectNames } from "@/lib/task-projects";
 
 export const dynamic = "force-dynamic";
@@ -49,12 +49,12 @@ export async function POST(request: Request) {
       } catch (error) {
         if (!(error instanceof Error) || !("code" in error) || error.code !== 11000) throw error;
         task = await Task.findOne({ _id, userId: user.id }).lean();
-        if (!task) return NextResponse.json({ error: "Task ID conflict" }, { status: 409 });
       }
+      if (!task) return NextResponse.json({ error: "Task ID conflict" }, { status: 409 });
       // Recover a queued insert whose projectId was dropped by the stale schema.
       // Match the original task and never replace an explicit projectId (even null).
       if (projectId && task.projectId === undefined && task.title === title && body.createdAt) {
-        const recovered = await Task.collection.findOneAndUpdate(
+        const recovered = await TaskCollection.findOneAndUpdate(
           { _id, userId: new Types.ObjectId(user.id), title, createdAt: values.createdAt,
             archivedAt: null, projectId: { $exists: false } },
           { $set: { projectId }, $unset: { project: "" } },

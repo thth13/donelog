@@ -1,4 +1,5 @@
 import { Schema, model, models, deleteModel } from "mongoose";
+import type { InferSchemaType, Model } from "mongoose";
 
 const TaskSchema = new Schema(
   {
@@ -19,4 +20,8 @@ if (models.Task && (models.Task.schema.path("projectId")?.instance !== "ObjectId
   deleteModel("Task");
 }
 
-export const Task = models.Task || model("Task", TaskSchema);
+type TaskRecord = InferSchemaType<typeof TaskSchema>;
+
+export const Task = (models.Task as Model<TaskRecord> | undefined) || model("Task", TaskSchema);
+// Mongoose does not carry the model's document type through to collection.
+export const TaskCollection = Task.db.collection<TaskRecord>(Task.collection.name);
