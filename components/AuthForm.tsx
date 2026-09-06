@@ -34,9 +34,9 @@ export function AuthForm({ mode, onBusyChange }: { mode: "register" | "login"; o
     event.preventDefault();
     if (lock.current) return;
     setError("");
-    if (createdKey && !saved) { setError("Save your secret key before continuing."); return; }
+    if (createdKey && !saved) { setError("Save your authorization key before continuing."); return; }
     if (!createdKey && (mode === "register" ? !validLogin(login) : !secret.trim())) {
-      setError(mode === "register" ? "Use 2–40 letters, numbers, spaces, dots, hyphens or underscores." : "Enter your secret key.");
+      setError(mode === "register" ? "Use 2–40 letters, numbers, spaces, dots, hyphens or underscores." : "Enter your authorization key.");
       field.current?.focus();
       return;
     }
@@ -73,17 +73,17 @@ export function AuthForm({ mode, onBusyChange }: { mode: "register" | "login"; o
 
   return (
       <div className="auth-content">
-        <Heading ref={heading} id="auth-title" tabIndex={-1}>{createdKey ? "Save your secret key." : mode === "register" ? "Create your account." : "Welcome back."}</Heading>
-        <p id="auth-description" className="auth-description">{createdKey ? `Your account is ${login}. This is your key to sign in. Save it somewhere safe — you will need it to access your account again.` : mode === "register" ? "Choose your username. Next, you’ll receive your personal sign-in key." : "Paste your secret key to open your journal."}</p>
+        <Heading ref={heading} id="auth-title" tabIndex={-1}>{createdKey ? "Save your authorization key." : mode === "register" ? "Create your account." : "Welcome back."}</Heading>
+        <p id="auth-description" className="auth-description">{createdKey ? `Your account is ${login}. This is your key to sign in. Save it somewhere safe — you will need it to access your account again.` : mode === "register" ? "Choose your username. Next, you’ll receive your personal sign-in key." : "Paste your authorization key to open your journal."}</p>
         <form onSubmit={submit} noValidate aria-busy={busy}>
           {mode === "register" && !createdKey ? <>
             <label htmlFor="account-login">Username</label>
             <input ref={field} autoFocus id="account-login" name="username" autoComplete="username" maxLength={40} value={login} disabled={busy} aria-invalid={!!error} aria-describedby="auth-error" placeholder="e.g. alex" onChange={event => { setLogin(event.target.value); setError(""); }} />
           </> : <>
-            <label htmlFor="account-key">Secret key</label>
+            <label htmlFor="account-key">Authorization key</label>
             <div className="secret-field"><input ref={field} autoFocus={!createdKey} id="account-key" name="password" type={createdKey ? "text" : "password"} autoComplete={createdKey ? "off" : "current-password"} spellCheck={false} autoCapitalize="none" value={createdKey || secret} readOnly={!!createdKey} disabled={busy} aria-invalid={!!error} aria-describedby="auth-error" onChange={event => { setSecret(event.target.value); setError(""); }} /></div>
           </>}
-          {createdKey && <div className="key-save"><button type="button" className="auth-secondary" onClick={() => void copyKey()}>Copy secret key</button><p role="status">{copyStatus}</p><label className="key-checkbox"><input type="checkbox" checked={saved} onChange={event => setSaved(event.target.checked)} />I saved my key somewhere safe</label></div>}
+          {createdKey && <div className="key-save"><button type="button" className="auth-secondary" onClick={() => void copyKey()}>Copy authorization key</button><p role="status">{copyStatus}</p><label className="key-checkbox"><input type="checkbox" checked={saved} onChange={event => setSaved(event.target.checked)} />I saved my key somewhere safe</label></div>}
           <p id="auth-error" className="auth-error" role="alert">{error}</p>
           <button className="auth-primary" type="submit" disabled={busy || (!!createdKey && !saved)}>{busy ? "Please wait…" : createdKey ? "Open my journal" : mode === "register" ? "Continue" : "Sign in"}<ArrowUpRight weight="bold" /></button>
         </form>

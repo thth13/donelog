@@ -11,7 +11,7 @@ export async function POST(request: Request) {
   if (!validLogin(login)) {
     return NextResponse.json({ error: "Use 2–40 letters, numbers, spaces, dots, hyphens or underscores." }, { status: 400 });
   }
-  if (login === "thth13") return NextResponse.json({ error: "This name is reserved. Sign in with your secret key." }, { status: 409 });
+  if (login === "thth13") return NextResponse.json({ error: "This name is reserved. Sign in with your authorization key." }, { status: 409 });
   const requestId = typeof body?.requestId === "string" ? body.requestId : "";
   if (!/^[a-f0-9]{64}$/.test(requestId)) return NextResponse.json({ error: "Invalid registration request. Reload and try again." }, { status: 400 });
   // A private random request ID makes a lost response safely retryable in this tab.
