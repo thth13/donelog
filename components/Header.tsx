@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ChartBar, Check } from "@phosphor-icons/react/dist/ssr";
 import { AccountMenu } from "@/components/AccountMenu";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export function Header({ stats = false }: { stats?: boolean }) {
   return (
@@ -9,7 +10,7 @@ export function Header({ stats = false }: { stats?: boolean }) {
       <div className="header-actions">{!stats && <Link className="nav-link" href="/stats">
         <ChartBar weight="bold" /> Statistics
       </Link>}
-      <AccountMenu /></div>
+      <AccountMenu /><ThemeToggle /></div>
     </header>
   );
 }

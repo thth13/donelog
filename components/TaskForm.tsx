@@ -5,11 +5,15 @@ import { useAccount } from "@/components/AccountProvider";
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { ArrowUpRight, Check } from "@phosphor-icons/react";
 
+import type { ProjectOption } from "@/lib/project-types";
+import { ProjectTaskInput } from "@/components/ProjectTaskInput";
+
 import { enqueueTask } from "@/lib/task-queue";
 
 export function TaskForm() {
   const { id: userId } = useAccount();
   const [title, setTitle] = useState("");
+  const [project, setProject] = useState<ProjectOption | null>(null);
   const [status, setStatus] = useState<"idle" | "saved" | "error">("idle");
 
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
@@ -22,7 +26,7 @@ export function TaskForm() {
     const value = input.current?.value.trim() || "";
     if (!value) return;
     try {
-      enqueueTask(userId, value);
+      enqueueTask(userId, value, project);
     } catch {
       setStatus("error");
       return;
@@ -46,10 +50,14 @@ export function TaskForm() {
           </div>
         </div>
       )}
-      <div className="input-wrap">
-        <input ref={input} id="task" aria-describedby="task-status" onKeyDown={event => { if (event.key === "Enter" && event.nativeEvent.isComposing) event.preventDefault(); }} name="completed-task" aria-label="Completed task" maxLength={300} autoFocus autoComplete="off" value={title} onChange={(e) => { clearTimeout(timer.current); setTitle(e.target.value); setStatus("idle"); }} />
-        <button aria-label="Save" disabled={!title.trim()}><ArrowUpRight weight="bold" /></button>
-      </div>
+      <ProjectTaskInput inputRef={input} project={project} onProjectChange={setProject} onTitleChange={value => { clearTimeout(timer.current); setTitle(value); setStatus("idle"); }} inputProps={{
+        id: "task", "aria-describedby": "task-status", name: "completed-task", "aria-label": "Completed task",
+        maxLength: 300, autoFocus: true, autoComplete: "off", value: title,
+        onKeyDown: event => { if (event.key === "Enter" && event.nativeEvent.isComposing) event.preventDefault(); },
+        onChange: event => { clearTimeout(timer.current); setTitle(event.target.value); setStatus("idle"); }
+      }}>
+        <button className="task-submit" aria-label="Save" disabled={!title.trim()}><ArrowUpRight weight="bold" /></button>
+      </ProjectTaskInput>
       <span id="task-status" className={status === "error" ? "form-foot form-status error" : "sr-only"} aria-live="polite">{status === "saved" ? "Saved on this device" : status === "error" ? "Could not save on this device. Your text is still here. Free up browser storage and try again." : ""}</span>
     </form>
   );

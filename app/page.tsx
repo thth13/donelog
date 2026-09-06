@@ -5,6 +5,7 @@ import { currentUser } from "@/lib/auth";
 import { Landing } from "@/components/Landing";
 import { AccountProvider } from "@/components/AccountProvider";
 import { TaskSync } from "@/components/TaskSync";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export default async function Home({ searchParams }: { searchParams: Promise<{ mode?: string }> }) {
   const user = await currentUser();
@@ -17,7 +18,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ m
         <TaskForm />
         <div className="minimal-meta">
           <time>{new Date().toLocaleDateString("en-US", { day: "numeric", month: "long", year: "numeric" })}</time>
-          <Link href="/stats"><ChartBar weight="bold" /> Statistics</Link>
+          <div className="minimal-actions"><Link href="/stats"><ChartBar weight="bold" /> Statistics</Link><ThemeToggle /></div>
         </div>
       </section>
     </main>

@@ -3,11 +3,13 @@
 import { accountFetch, useAccount } from "@/components/AccountProvider";
 
 import { useEffect, useRef, useState } from "react";
+import type { ProjectOption } from "@/lib/project-types";
+import { ProjectTaskInput } from "@/components/ProjectTaskInput";
 import DatePicker from "react-datepicker";
 import { CaretLeft, CaretRight, CalendarBlank, Clock } from "@phosphor-icons/react";
 import { acknowledgeTask, pendingTasks } from "@/lib/task-queue";
 
-type Task = { _id: string; title: string; createdAt: string; updatedAt?: string; archivedAt?: string | null };
+type Task = { _id: string; title: string; projectId?: string | null; project?: string; createdAt: string; updatedAt?: string; archivedAt?: string | null };
 
 function localDateTime(value: string) {
   const date = new Date(value);
@@ -20,6 +22,7 @@ export function EditTaskDialog({ task, onClose, onSaved }: { task: Task; onClose
   const [calendarOpen, setCalendarOpen] = useState(false);
   const dateButtonRef = useRef<HTMLButtonElement>(null);
   const [title, setTitle] = useState(task.title);
+  const [project, setProject] = useState<ProjectOption | null>(task.project ? { _id: task.projectId || "", name: task.project } : null);
   const [date, setDate] = useState(localDateTime(task.createdAt));
   const [hours, setHours] = useState(localDateTime(task.createdAt).slice(11, 13));
   const [minutes, setMinutes] = useState(localDateTime(task.createdAt).slice(14, 16));
@@ -76,7 +79,7 @@ export function EditTaskDialog({ task, onClose, onSaved }: { task: Task; onClose
       }
       const response = await accountFetch(userId, `/api/tasks/${task._id}`, {
         method: "PATCH", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title: title.trim(), createdAt: completedAt === localDateTime(task.createdAt) ? task.createdAt : new Date(completedAt).toISOString() }),
+        body: JSON.stringify({ title: title.trim(), ...(project && !project._id ? { project: project.name } : { projectId: project?._id || null }), createdAt: completedAt === localDateTime(task.createdAt) ? task.createdAt : new Date(completedAt).toISOString() }),
         signal: controller.signal
       });
       const result = await response.json();
@@ -96,7 +99,11 @@ export function EditTaskDialog({ task, onClose, onSaved }: { task: Task; onClose
     <form noValidate onSubmit={event => { event.preventDefault(); void save(); }}>
       <h2 id="edit-title">Edit task</h2>
       <label htmlFor="task-title">Task</label>
-      <input ref={titleRef} id="task-title" autoFocus value={title} maxLength={300} disabled={saving} aria-invalid={invalid === "title"} aria-describedby={invalid === "title" ? "edit-error" : undefined} onChange={event => { setTitle(event.target.value); setInvalid(null); setError(""); }} />
+      <ProjectTaskInput inputRef={titleRef} project={project} onProjectChange={setProject} onTitleChange={value => { setTitle(value); setInvalid(null); setError(""); }} inputProps={{
+        id: "task-title", autoFocus: true, value: title, maxLength: 300, disabled: saving,
+        "aria-invalid": invalid === "title", "aria-describedby": invalid === "title" ? "edit-error" : undefined,
+        onChange: event => { setTitle(event.target.value); setInvalid(null); setError(""); }
+      }} />
       <div id="task-date-label" className="date-field-label">Date and time</div>
       <div className="task-datetime-row">
         <button ref={dateButtonRef} type="button" className="task-date-trigger" disabled={saving} aria-expanded={calendarOpen} aria-controls="task-calendar" onClick={() => setCalendarOpen(open => !open)}>

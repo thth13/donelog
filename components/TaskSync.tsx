@@ -40,7 +40,7 @@ export function TaskSync() {
           if (!response.ok) {
             blocked = true;
             retry = response.status >= 500 || response.status === 408 || response.status === 429;
-            setMessage(response.status === 401 ? "Session expired · sign in again to sync your saved tasks" : response.status === 409 ? "Sync conflict · reload and sign in to the original account" : "Tasks are kept on this device · could not sync");
+            setMessage(response.status === 401 ? "Session expired · sign in again to sync your saved tasks" : response.status === 409 ? "Sync conflict · tasks are kept on this device. Reload and retry." : "Tasks are kept on this device · could not sync");
             break;
           }
           acknowledgeTask(userId, await response.json());

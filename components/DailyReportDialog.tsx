@@ -1,9 +1,11 @@
 "use client";
 
+import { projectStyle } from "@/lib/project-style";
+
 import { useEffect, useRef, useState } from "react";
 import { Check, Copy, EnvelopeSimple, ShareNetwork, WhatsappLogo, X } from "@phosphor-icons/react";
 
-type ReportTask = { _id: string; title: string; createdAt: string };
+type ReportTask = { _id: string; title: string; project?: string; createdAt: string };
 const timeLabel = (value: string) => new Date(value).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
 
 export function DailyReportDialog({ date, tasks, incomplete, onClose }: {
@@ -26,7 +28,7 @@ export function DailyReportDialog({ date, tasks, incomplete, onClose }: {
   const title = `Daily report · ${dateLabel}`;
   const text = ["done — Daily report", dateLabel, "", countLabel,
     ...(incomplete ? ["Partial report: some entries could not be loaded."] : []), "",
-    ...(entries.length ? entries.map(task => `✓ ${task.title} (${timeLabel(task.createdAt)})`) : ["No completed tasks for this day."])].join("\n");
+    ...(entries.length ? entries.map(task => `✓ ${task.title}${task.project ? ` [${task.project}]` : ""} (${timeLabel(task.createdAt)})`) : ["No completed tasks for this day."])].join("\n");
   const encodedText = encodeURIComponent(text);
   // Keep long reports intact: clipboard/native sharing avoid deep-link length limits.
   const linkShareAvailable = encodedText.length < 6000;
@@ -78,7 +80,7 @@ export function DailyReportDialog({ date, tasks, incomplete, onClose }: {
       <div className="daily-report-intro"><h3>{dateLabel}</h3></div>
       <div className="daily-report-total"><strong>{entries.length.toLocaleString("en-US")}</strong><span>{entries.length === 1 ? "task" : "tasks"}<br />completed</span><Check size={28} weight="bold" aria-hidden="true" /></div>
       {incomplete && <p className="daily-report-warning">Partial report: some entries could not be loaded.</p>}
-      {entries.length ? <ol className="daily-report-entries">{entries.map(task => <li key={task._id}><Check size={16} weight="bold" aria-hidden="true" /><span>{task.title}</span><time dateTime={task.createdAt}>{timeLabel(task.createdAt)}</time></li>)}</ol> : <p className="daily-report-empty">No completed tasks for this day. Your next small win starts with one entry.</p>}
+      {entries.length ? <ol className="daily-report-entries">{entries.map(task => <li key={task._id}><Check size={16} weight="bold" aria-hidden="true" /><span>{task.title}{task.project && <span className="project-chip" style={projectStyle(task.project)}>{task.project}</span>}</span><time dateTime={task.createdAt}>{timeLabel(task.createdAt)}</time></li>)}</ol> : <p className="daily-report-empty">No completed tasks for this day. Your next small win starts with one entry.</p>}
     </article>
     <div className="daily-report-sharing">
       <button type="button" className="daily-report-share" aria-expanded={shareOpen} aria-controls="daily-report-share-options" onClick={() => setShareOpen(value => !value)}><ShareNetwork size={18} />Share report</button>

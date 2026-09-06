@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { ArrowUpRight, Check } from "@phosphor-icons/react";
 import { LoginDialog } from "@/components/LoginDialog";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export function Landing({ initialLoginOpen = false }: { initialLoginOpen?: boolean }) {
   const [loginOpen, setLoginOpen] = useState(initialLoginOpen);
@@ -19,7 +20,7 @@ export function Landing({ initialLoginOpen = false }: { initialLoginOpen?: boole
   }
 
   return <main className="landing-shell">
-    <header className="landing-header"><div className="brand"><span><Check weight="bold" /></span>done</div><span>A journal of things done</span></header>
+    <header className="landing-header"><div className="brand"><span><Check weight="bold" /></span>done</div><div className="landing-header-actions"><span>A journal of things done</span><ThemeToggle /></div></header>
     <section className="landing-hero" aria-labelledby="landing-title">
       <div className="landing-story">
         <p className="eyebrow">Give your day a little credit</p>
