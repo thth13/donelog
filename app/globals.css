@@ -3,7 +3,9 @@
 /* Daily reports reuse the journal palette and the native modal lifecycle. */
 .daily-report-trigger,.day-report-trigger { display:inline-flex; align-items:center; justify-content:center; gap:8px; border:1px solid var(--line); border-radius:10px; background:transparent; color:var(--green); font-size:12px; font-weight:700; }
 .daily-report-trigger { min-height:44px; padding:10px 15px; margin-top:22px; }
-.day-report-trigger { min-height:36px; padding:7px 10px; margin-top:12px; }
+.day-report-trigger { min-height:36px; padding:7px 10px; margin-top:12px; opacity:0; pointer-events:none; }
+.day-group:hover .day-report-trigger,.day-group:focus-within .day-report-trigger { opacity:1; pointer-events:auto; }
+@media (hover:none),(pointer:coarse) { .day-report-trigger { opacity:1; pointer-events:auto; } }
 .daily-report-trigger:not(:disabled):hover,.day-report-trigger:hover { background:var(--line); }
 .daily-report-trigger:not(:disabled):active,.day-report-trigger:active { transform:translateY(1px); }
 .daily-report-trigger:disabled { opacity:.5; }
